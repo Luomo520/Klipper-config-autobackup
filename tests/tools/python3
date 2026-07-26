@@ -1,0 +1,5 @@
+#!/bin/sh
+if [ -n "${KLIPPER_TEST_PYTHON:-}" ]; then
+    exec "$KLIPPER_TEST_PYTHON" "$@"
+fi
+exec /usr/bin/python3 "$@"

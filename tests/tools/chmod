@@ -1,0 +1,3 @@
+#!/bin/sh
+# NTFS test helper. Linux installations use the system chmod.
+exit 0

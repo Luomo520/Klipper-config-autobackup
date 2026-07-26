@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify payload checksums
+        run: cd payload && sha256sum -c SHA256SUMS
+
+      - name: Check shell syntax
+        run: |
+          sh -n install.sh
+          sh -n tests/test_installer.sh
+          find tests/tools -maxdepth 1 -type f -exec sh -n {} \;
+
+      - name: Run Python tests
+        run: |
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+          python3 -m py_compile \
+            scripts/configure_moonraker.py \
+            payload/moonraker/cloud_backup.py \
+            payload/moonraker/cloud_backup_web.py
+
+      - name: Run installer lifecycle test
+        run: sh tests/test_installer.sh
+
+      - name: Verify source and payload match
+        run: |
+          cmp payload/moonraker/cloud_backup.py source/moonraker/cloud_backup.py
+          cmp payload/moonraker/cloud_backup_web.py source/moonraker/cloud_backup_web.py
+
+      - name: Inspect Fluidd archive
+        run: |
+          test "$(tar -tzf payload/fluidd/fluidd-dist.tar.gz | grep -cE '(^|/)CloudBackup-[^/]+\.js$')" -eq 1
+          tar -tzf payload/fluidd/fluidd-dist.tar.gz | grep -q '^\./index.html$'
+          ! tar -tzf payload/fluidd/fluidd-dist.tar.gz | grep -Eq '(^/|(^|/)\.\.(/|$)|\\)'

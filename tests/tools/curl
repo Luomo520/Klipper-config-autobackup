@@ -1,0 +1,3 @@
+#!/bin/sh
+# The lifecycle test intentionally exercises the documented offline path.
+exit 22
